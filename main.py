@@ -3,17 +3,13 @@ from Inventario import Inventario
 from Cliente import Cliente
 from Venta import Venta
 
-# ──────────────────────────────────────────────
-#  Datos en memoria
-# ──────────────────────────────────────────────
+# Inicialización
 inventario = Inventario()
 clientes = []
 ventas = []
-contador_ventas = 1  # para numerar ventas automáticamente
+contador_ventas = 1
 
-# ──────────────────────────────────────────────
-#  Cargar datos persistidos (si existen)
-# ──────────────────────────────────────────────
+# Cargar datos
 try:
     inventario.cargar_archivo("productos.txt")
 except FileNotFoundError:
@@ -31,10 +27,7 @@ try:
 except FileNotFoundError:
     pass
 
-
-# ──────────────────────────────────────────────
-#  Helpers
-# ──────────────────────────────────────────────
+# Helpers
 def separador():
     print("=" * 45)
 
@@ -42,15 +35,9 @@ def pausa():
     input("\nPresiona Enter para continuar...")
 
 def buscar_cliente_por_id(identificacion):
-    for c in clientes:
-        if c.get_identificacion() == identificacion:
-            return c
-    return None
+    return next((c for c in clientes if c.get_identificacion() == identificacion), None)
 
-
-# ──────────────────────────────────────────────
-#  SUBMENÚ: INVENTARIO
-# ──────────────────────────────────────────────
+# SUBMENÚ: INVENTARIO
 def menu_inventario():
     while True:
         separador()
@@ -80,23 +67,21 @@ def menu_inventario():
             print("       AGREGAR PRODUCTO")
             separador()
             try:
-                codigo    = int(input("Código: "))
-                nombre    = input("Nombre: ").strip()
+                codigo = int(input("Código: "))
+                nombre = input("Nombre: ").strip()
                 categoria = input("Categoría (Superior/Inferior/Accesorio...): ").strip()
-                talla     = input("Talla: ").strip()
-                precio    = int(input("Precio: "))
-                cantidad  = int(input("Cantidad en stock: "))
+                talla = input("Talla: ").strip()
+                precio = int(input("Precio: "))
+                cantidad = int(input("Cantidad en stock: "))
 
-                # Verificar que el código no esté repetido
                 if inventario.buscar_producto_secuencial(codigo):
-                    print("  ⚠ Ya existe un producto con ese código.")
+                    print("   Ya existe un producto con ese código.")
                 else:
-                    nuevo = Producto(codigo, nombre, categoria, talla, precio, cantidad)
-                    inventario.agregar_producto(nuevo)
+                    inventario.agregar_producto(Producto(codigo, nombre, categoria, talla, precio, cantidad))
                     inventario.guardar_archivo("productos.txt")
-                    print("  ✓ Producto agregado y guardado.")
+                    print("  Producto agregado y guardado.")
             except ValueError:
-                print("  ✗ Datos inválidos. Intenta de nuevo.")
+                print("   Datos inválidos. Intenta de nuevo.")
             pausa()
 
         elif opcion == "3":
@@ -110,9 +95,9 @@ def menu_inventario():
                     print("\n  Producto encontrado:")
                     encontrado.mostrar_producto()
                 else:
-                    print("  ✗ Producto no encontrado.")
+                    print("  Producto no encontrado.")
             except ValueError:
-                print("  ✗ Código inválido.")
+                print("   Código inválido.")
             pausa()
 
         elif opcion == "4":
@@ -136,13 +121,10 @@ def menu_inventario():
         elif opcion == "0":
             break
         else:
-            print("  ✗ Opción no válida.")
+            print("   Opción no válida.")
             pausa()
 
-
-# ──────────────────────────────────────────────
-#  SUBMENÚ: PRODUCTOS (vista rápida)
-# ──────────────────────────────────────────────
+# SUBMENÚ: PRODUCTOS
 def menu_productos():
     while True:
         separador()
@@ -173,21 +155,18 @@ def menu_productos():
                     print("\n  Detalles del producto:")
                     encontrado.mostrar_producto()
                 else:
-                    print("  ✗ Producto no encontrado.")
+                    print("   Producto no encontrado.")
             except ValueError:
-                print("  ✗ Código inválido.")
+                print("   Código inválido.")
             pausa()
 
         elif opcion == "0":
             break
         else:
-            print("  ✗ Opción no válida.")
+            print("   Opción no válida.")
             pausa()
 
-
-# ──────────────────────────────────────────────
-#  SUBMENÚ: VENTAS
-# ──────────────────────────────────────────────
+# SUBMENÚ: VENTAS
 def menu_ventas():
     global contador_ventas
 
@@ -206,7 +185,6 @@ def menu_ventas():
             print("       NUEVA VENTA")
             separador()
             try:
-                # Cliente
                 id_cliente = int(input("Identificación del cliente: "))
                 cliente = buscar_cliente_por_id(id_cliente)
 
@@ -215,41 +193,56 @@ def menu_ventas():
                     cliente = Cliente(id_cliente, nombre_cliente)
                     clientes.append(cliente)
                     Cliente.guardar_clientes(clientes, "clientes.txt")
-                    print(f"  ✓ Cliente '{nombre_cliente}' registrado.")
-
-                # Producto
-                codigo_producto = int(input("Código del producto: "))
-                producto = inventario.buscar_producto_secuencial(codigo_producto)
-
-                if not producto:
-                    print("  ✗ Producto no encontrado en el inventario.")
-                    pausa()
-                    continue
-
-                print(f"  Producto: {producto.get_nombre()} | Stock: {producto.get_cantidad()} | Precio: ${producto.get_precio()}")
-                cantidad = int(input("Cantidad a vender: "))
-
-                if cantidad <= 0:
-                    print("  ✗ La cantidad debe ser mayor a 0.")
-                    pausa()
-                    continue
+                    print(f"   Cliente '{nombre_cliente}' registrado.")
 
                 fecha = input("Fecha (DD/MM/AAAA): ").strip()
+                venta = Venta(contador_ventas, fecha, cliente)
 
-                venta = Venta(contador_ventas, fecha, cliente, producto, cantidad)
-                if venta.registrar_venta():
-                    ventas.append(venta)
-                    contador_ventas += 1
-                    Venta.guardar_ventas(ventas, "ventas.txt")
-                    inventario.guardar_archivo("productos.txt")
-                    print(f"\n  ✓ Venta #{venta.get_numero_venta()} registrada.")
-                    print(f"  Total: ${venta.get_total()}")
-                    print(f"  Stock restante de '{producto.get_nombre()}': {producto.get_cantidad()}")
+                while True:
+                    separador()
+                    codigo_producto = int(input("Código del producto: "))
+                    producto = inventario.buscar_producto_secuencial(codigo_producto)
+
+                    if not producto:
+                        print("   Producto no encontrado en el inventario.")
+                        if input("¿Desea intentar con otro producto? (s/n): ").strip().lower() != 's':
+                            break
+                        continue
+
+                    print(f"  Producto: {producto.get_nombre()} | Stock: {producto.get_cantidad()} | Precio: ${producto.get_precio()}")
+                    cantidad = int(input("Cantidad a vender: "))
+
+                    if cantidad <= 0:
+                        print("   La cantidad debe ser mayor a 0.")
+                        if input("¿Desea intentar de nuevo? (s/n): ").strip().lower() != 's':
+                            break
+                        continue
+
+                    if venta.agregar_item(producto, cantidad):
+                        print(f"   {producto.get_nombre()} agregado a la venta.")
+                    else:
+                        print(f"   Stock insuficiente. Disponible: {producto.get_cantidad()}")
+
+                    if input("\n¿Agregar otro producto a esta venta? (s/n): ").strip().lower() != 's':
+                        break
+
+                if venta.get_items():
+                    if venta.registrar_venta():
+                        ventas.append(venta)
+                        contador_ventas += 1
+                        Venta.guardar_ventas(ventas, "ventas.txt")
+                        inventario.guardar_archivo("productos.txt")
+                        separador()
+                        print("\n  VENTA REGISTRADA EXITOSAMENTE")
+                        separador()
+                        venta.mostrar_venta()
+                    else:
+                        print("   Error al registrar la venta.")
                 else:
-                    print(f"  ✗ Stock insuficiente. Disponible: {producto.get_cantidad()}")
+                    print("   No se agregaron productos a la venta.")
 
             except ValueError:
-                print("  ✗ Datos inválidos. Intenta de nuevo.")
+                print("   Datos inválidos. Intenta de nuevo.")
             pausa()
 
         elif opcion == "2":
@@ -260,29 +253,21 @@ def menu_ventas():
                 print("  No hay ventas registradas.")
             else:
                 for v in ventas:
-                    print("  ----------------")
-                    print(f"  N° Venta : {v.get_numero_venta()}")
-                    print(f"  Fecha    : {v.get_fecha()}")
-                    print(f"  Cliente  : {v.get_cliente().get_nombre()}")
-                    print(f"  Producto : {v.get_producto().get_nombre()}")
-                    print(f"  Cantidad : {v.get_cantidad()}")
-                    print(f"  Total    : ${v.get_total()}")
+                    print("  ================")
+                    v.mostrar_venta()
             pausa()
 
         elif opcion == "0":
             break
         else:
-            print("  ✗ Opción no válida.")
+            print("   Opción no válida.")
             pausa()
 
-
-# ──────────────────────────────────────────────
-#  MENÚ PRINCIPAL
-# ──────────────────────────────────────────────
+# MENÚ PRINCIPAL
 def menu_principal():
     while True:
         separador()
-        print("     🛍  TIENDA DE ROPA - MENÚ PRINCIPAL")
+        print("       TIENDA DE ROPA - MENÚ PRINCIPAL")
         separador()
         print("  1. Inventario")
         print("  2. Realizar una venta")
@@ -299,7 +284,6 @@ def menu_principal():
         elif opcion == "3":
             menu_productos()
         elif opcion == "4":
-            # Atajo directo a ver ventas
             separador()
             print("       TODAS LAS VENTAS")
             separador()
@@ -307,24 +291,15 @@ def menu_principal():
                 print("  No hay ventas registradas.")
             else:
                 for v in ventas:
-                    print("  ----------------")
-                    print(f"  N° Venta : {v.get_numero_venta()}")
-                    print(f"  Fecha    : {v.get_fecha()}")
-                    print(f"  Cliente  : {v.get_cliente().get_nombre()}")
-                    print(f"  Producto : {v.get_producto().get_nombre()}")
-                    print(f"  Cantidad : {v.get_cantidad()}")
-                    print(f"  Total    : ${v.get_total()}")
+                    print("  ================")
+                    v.mostrar_venta()
             pausa()
         elif opcion == "0":
-            print("\n  Hasta luego 👋")
+            print("\n  Hasta luego ")
             break
         else:
-            print("  ✗ Opción no válida. Intenta de nuevo.")
+            print("  Opción no válida. Intenta de nuevo.")
             pausa()
 
-
-# ──────────────────────────────────────────────
-#  PUNTO DE ENTRADA
-# ──────────────────────────────────────────────
 if __name__ == "__main__":
     menu_principal()

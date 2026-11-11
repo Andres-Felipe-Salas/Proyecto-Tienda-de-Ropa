@@ -9,125 +9,57 @@ class Inventario:
         self.productos.append(producto)
 
     def mostrar_inventario(self):
-
         for producto in self.productos:
             print("----------------")
             producto.mostrar_producto()
 
     def buscar_producto_secuencial(self, codigo):
-
         for producto in self.productos:
             if producto.codigo == codigo:
                 return producto
-
         return None
 
     def buscar_producto_binaria(self, codigo):
-
-        inicio = 0
-        fin = len(self.productos) - 1
-
+        inicio, fin = 0, len(self.productos) - 1
         while inicio <= fin:
-
             medio = (inicio + fin) // 2
-
             if self.productos[medio].codigo == codigo:
                 return self.productos[medio]
-
             elif self.productos[medio].codigo < codigo:
                 inicio = medio + 1
-
             else:
                 fin = medio - 1
-
         return None
 
     def ordenar_por_precio(self):
-
-        productos_ordenados = []
-
-        for producto in self.productos:
-            productos_ordenados.append(producto)
-
-        cantidad = len(productos_ordenados)
-
-        for i in range(cantidad - 1):
-
-            for j in range(cantidad - 1 - i):
-
+        productos_ordenados = self.productos.copy()
+        n = len(productos_ordenados)
+        for i in range(n - 1):
+            for j in range(n - 1 - i):
                 if productos_ordenados[j].precio > productos_ordenados[j + 1].precio:
-
-                    temporal = productos_ordenados[j]
-                    productos_ordenados[j] = productos_ordenados[j + 1]
-                    productos_ordenados[j + 1] = temporal
-
+                    productos_ordenados[j], productos_ordenados[j + 1] = productos_ordenados[j + 1], productos_ordenados[j]
         return productos_ordenados
 
     def ordenar_por_nombre(self):
-
-        productos_ordenados = []
-
-        for producto in self.productos:
-            productos_ordenados.append(producto)
-
-        cantidad = len(productos_ordenados)
-
-        for i in range(cantidad - 1):
-
-            for j in range(cantidad - 1 - i):
-
+        productos_ordenados = self.productos.copy()
+        n = len(productos_ordenados)
+        for i in range(n - 1):
+            for j in range(n - 1 - i):
                 if productos_ordenados[j].nombre.lower() > productos_ordenados[j + 1].nombre.lower():
-
-                    temporal = productos_ordenados[j]
-                    productos_ordenados[j] = productos_ordenados[j + 1]
-                    productos_ordenados[j + 1] = temporal
-
+                    productos_ordenados[j], productos_ordenados[j + 1] = productos_ordenados[j + 1], productos_ordenados[j]
         return productos_ordenados
 
     def guardar_archivo(self, nombre_archivo):
-
         with open(nombre_archivo, "w", encoding="utf-8") as archivo:
-
-            for producto in self.productos:
-
-                linea = (
-                    f"{producto.get_codigo()};"
-                    f"{producto.get_nombre()};"
-                    f"{producto.get_categoria()};"
-                    f"{producto.get_talla()};"
-                    f"{producto.get_precio()};"
-                    f"{producto.get_cantidad()}"
-                    "\n"
-                )
-
-                archivo.write(linea)
-
-    # cargar arch
+            for p in self.productos:
+                archivo.write(f"{p.codigo};{p.nombre};{p.categoria};{p.talla};{p.precio};{p.cantidad}\n")
 
     def cargar_archivo(self, nombre_archivo):
-
         self.productos = []
-
         with open(nombre_archivo, "r", encoding="utf-8") as archivo:
-
             for linea in archivo:
-
-                linea = linea.rstrip("\n")
-
-                if linea.strip() != "":
-
+                linea = linea.strip()
+                if linea:
                     datos = linea.split(";")
-
-                codigo = int(datos[0])
-                nombre = datos[1]
-                categoria = datos[2]
-                talla = datos[3]
-                precio = int(datos[4])
-                cantidad = int(datos[5])
-
-
-                producto = Producto(
-                    codigo, nombre, categoria,
-                    talla, precio, cantidad)
-
-                self.productos.append(producto)
+                    producto = Producto(int(datos[0]), datos[1], datos[2], datos[3], int(datos[4]), int(datos[5]))
+                    self.productos.append(producto)
