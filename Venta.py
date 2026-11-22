@@ -10,27 +10,6 @@ class Venta:
         self.total_iva = 0
         self.total = 0
 
-    def get_numero_venta(self):
-        return self.numero_venta
-
-    def get_fecha(self):
-        return self.fecha
-
-    def get_cliente(self):
-        return self.cliente
-
-    def get_items(self):
-        return self.items
-
-    def get_subtotal_sin_iva(self):
-        return self.subtotal_sin_iva
-
-    def get_total_iva(self):
-        return self.total_iva
-
-    def get_total(self):
-        return self.total
-
     def agregar_item(self, producto, cantidad):
         if not producto.hay_disponibilidad(cantidad):
             return False
@@ -70,13 +49,13 @@ class Venta:
     def mostrar_venta(self):
         print(f"N° Venta : {self.numero_venta}")
         print(f"Fecha    : {self.fecha}")
-        print(f"Cliente  : {self.cliente.get_nombre()} (ID: {self.cliente.get_identificacion()})")
+        print(f"Cliente  : {self.cliente.nombre} (ID: {self.cliente.identificacion})")
         print("\nItems:")
         print(f"{'Producto':<20} {'Cant':>4} {'P.Base':>10} {'IVA':>10} {'Subtotal':>10}")
         print("-" * 60)
         for item in self.items:
             prod = item['producto']
-            print(f"{prod.get_nombre():<20} {item['cantidad']:>4} ${item['subtotal_base']:>9.2f} ${item['subtotal_iva']:>9.2f} ${item['subtotal']:>9.2f}")
+            print(f"{prod.nombre:<20} {item['cantidad']:>4} ${item['subtotal_base']:>9.2f} ${item['subtotal_iva']:>9.2f} ${item['subtotal']:>9.2f}")
         print("-" * 60)
         print(f"{'SUBTOTAL (sin IVA):':<45} ${self.subtotal_sin_iva:>9.2f}")
         print(f"{'IVA (19%):':<45} ${self.total_iva:>9.2f}")
@@ -87,18 +66,17 @@ class Venta:
         with open(nombre_archivo, "w", encoding="utf-8") as archivo:
             for venta in ventas:
                 items_str = ",".join(
-                    f"{item['producto'].get_codigo()}:{item['cantidad']}:{item['subtotal_base']}:{item['subtotal_iva']}:{item['subtotal']}"
+                    f"{item['producto'].codigo}:{item['cantidad']}:{item['subtotal_base']}:{item['subtotal_iva']}:{item['subtotal']}"
                     for item in venta.items
                 )
-                archivo.write(f"{venta.numero_venta};{venta.fecha};{venta.cliente.get_identificacion()};{items_str};{venta.subtotal_sin_iva};{venta.total_iva};{venta.total}\n")
+                archivo.write(f"{venta.numero_venta};{venta.fecha};{venta.cliente.identificacion};{items_str};{venta.subtotal_sin_iva};{venta.total_iva};{venta.total}\n")
 
     @staticmethod
     def cargar_ventas(nombre_archivo, clientes, productos):
         ventas = []
         with open(nombre_archivo, "r", encoding="utf-8") as archivo:
             for linea in archivo:
-                linea = linea.strip()
-                if not linea:
+                if not (linea := linea.strip()):
                     continue
                 
                 datos = linea.split(";")
@@ -106,7 +84,7 @@ class Venta:
                 fecha = datos[1]
                 identificacion = int(datos[2])
                 
-                cliente = next((c for c in clientes if c.get_identificacion() == identificacion), None)
+                cliente = next((c for c in clientes if c.identificacion == identificacion), None)
                 if not cliente:
                     continue
                 
@@ -116,7 +94,7 @@ class Venta:
                 if len(datos) == 6:
                     codigo = int(datos[3])
                     cantidad = int(datos[4])
-                    producto = next((p for p in productos if p.get_codigo() == codigo), None)
+                    producto = next((p for p in productos if p.codigo == codigo), None)
                     
                     if producto:
                         precio_base = producto.precio / (1 + Venta.IVA_PORCENTAJE)
@@ -147,7 +125,7 @@ class Venta:
                             partes = item_data.split(":")
                             codigo = int(partes[0])
                             cantidad = int(partes[1])
-                            producto = next((p for p in productos if p.get_codigo() == codigo), None)
+                            producto = next((p for p in productos if p.codigo == codigo), None)
                             
                             if producto:
                                 item = {
