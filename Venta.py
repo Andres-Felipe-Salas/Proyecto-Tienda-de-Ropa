@@ -1,9 +1,8 @@
 class Venta:
     IVA_PORCENTAJE = 0.19
 
-    def __init__(self, numero_venta, fecha, cliente):
+    def __init__(self, numero_venta, cliente):
         self.numero_venta = numero_venta
-        self.fecha = fecha
         self.cliente = cliente
         self.items = []
         self.subtotal_sin_iva = 0
@@ -48,7 +47,6 @@ class Venta:
 
     def mostrar_venta(self):
         print(f"N° Venta : {self.numero_venta}")
-        print(f"Fecha    : {self.fecha}")
         print(f"Cliente  : {self.cliente.nombre} (ID: {self.cliente.identificacion})")
         print("\nItems:")
         print(f"{'Producto':<20} {'Cant':>4} {'P.Base':>10} {'IVA':>10} {'Subtotal':>10}")
@@ -69,7 +67,7 @@ class Venta:
                     f"{item['producto'].codigo}:{item['cantidad']}:{item['subtotal_base']}:{item['subtotal_iva']}:{item['subtotal']}"
                     for item in venta.items
                 )
-                archivo.write(f"{venta.numero_venta};{venta.fecha};{venta.cliente.identificacion};{items_str};{venta.subtotal_sin_iva};{venta.total_iva};{venta.total}\n")
+                archivo.write(f"{venta.numero_venta};{venta.cliente.identificacion};{items_str};{venta.subtotal_sin_iva};{venta.total_iva};{venta.total}\n")
 
     @staticmethod
     def cargar_ventas(nombre_archivo, clientes, productos):
@@ -78,67 +76,39 @@ class Venta:
             for linea in archivo:
                 if not (linea := linea.strip()):
                     continue
-                
+
                 datos = linea.split(";")
                 numero_venta = int(datos[0])
-                fecha = datos[1]
-                identificacion = int(datos[2])
-                
+                identificacion = int(datos[1])
+
                 cliente = next((c for c in clientes if c.identificacion == identificacion), None)
                 if not cliente:
                     continue
-                
-                venta = Venta(numero_venta, fecha, cliente)
-                
-                # Formato antiguo (6 campos)
-                if len(datos) == 6:
-                    codigo = int(datos[3])
-                    cantidad = int(datos[4])
-                    producto = next((p for p in productos if p.codigo == codigo), None)
-                    
-                    if producto:
-                        precio_base = producto.precio / (1 + Venta.IVA_PORCENTAJE)
-                        iva_unitario = producto.precio - precio_base
-                        item = {
-                            'producto': producto,
-                            'cantidad': cantidad,
-                            'precio_base': round(precio_base, 2),
-                            'iva_unitario': round(iva_unitario, 2),
-                            'subtotal_base': round(precio_base * cantidad, 2),
-                            'subtotal_iva': round(iva_unitario * cantidad, 2),
-                            'subtotal': round(producto.precio * cantidad, 2)
-                        }
-                        venta.items.append(item)
-                        venta.subtotal_sin_iva = item['subtotal_base']
-                        venta.total_iva = item['subtotal_iva']
-                        venta.total = item['subtotal']
-                
-                # Formato nuevo (7 campos)
-                elif len(datos) == 7:
-                    items_str = datos[3]
-                    venta.subtotal_sin_iva = float(datos[4])
-                    venta.total_iva = float(datos[5])
-                    venta.total = float(datos[6])
-                    
-                    if items_str:
-                        for item_data in items_str.split(","):
-                            partes = item_data.split(":")
-                            codigo = int(partes[0])
-                            cantidad = int(partes[1])
-                            producto = next((p for p in productos if p.codigo == codigo), None)
-                            
-                            if producto:
-                                item = {
-                                    'producto': producto,
-                                    'cantidad': cantidad,
-                                    'precio_base': float(partes[2]) / cantidad,
-                                    'iva_unitario': float(partes[3]) / cantidad,
-                                    'subtotal_base': float(partes[2]),
-                                    'subtotal_iva': float(partes[3]),
-                                    'subtotal': float(partes[4])
-                                }
-                                venta.items.append(item)
-                
+
+                venta = Venta(numero_venta, cliente)
+                items_str = datos[2]
+                venta.subtotal_sin_iva = float(datos[3])
+                venta.total_iva = float(datos[4])
+                venta.total = float(datos[5])
+
+                if items_str:
+                    for item_data in items_str.split(","):
+                        partes = item_data.split(":")
+                        codigo = int(partes[0])
+                        cantidad = int(partes[1])
+                        producto = next((p for p in productos if p.codigo == codigo), None)
+
+                        if producto:
+                            item = {
+                                'producto': producto,
+                                'cantidad': cantidad,
+                                'precio_base': float(partes[2]) / cantidad,
+                                'iva_unitario': float(partes[3]) / cantidad,
+                                'subtotal_base': float(partes[2]),
+                                'subtotal_iva': float(partes[3]),
+                                'subtotal': float(partes[4])
+                            }
+                            venta.items.append(item)
+
                 ventas.append(venta)
-        
         return ventas

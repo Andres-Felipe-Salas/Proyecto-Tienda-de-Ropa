@@ -232,7 +232,7 @@ def menu_ventas():
                     Cliente.guardar_clientes(clientes, "clientes.txt")
                     print(f"   Cliente '{nombre_cliente}' registrado.")
 
-                venta = Venta(contador_ventas, fecha, cliente)
+                venta = Venta(contador_ventas, cliente)
 
                 while True:
                     separador()
