@@ -69,18 +69,45 @@ def menu_inventario():
             separador()
             try:
                 codigo = int(input("Código: "))
-                nombre = input("Nombre: ").strip()
-                categoria = input("Categoría (Superior/Inferior/Accesorio...): ").strip()
-                talla = input("Talla: ").strip()
-                precio = int(input("Precio: "))
-                cantidad = int(input("Cantidad en stock: "))
-
+                
                 if inventario.buscar_producto(codigo):
                     print("   Ya existe un producto con ese código.")
                 else:
-                    inventario.agregar_producto(Producto(codigo, nombre, categoria, talla, precio, cantidad))
-                    inventario.guardar_archivo("productos.txt")
-                    print("  Producto agregado y guardado.")
+                    nombre = input("Nombre: ").strip()
+                    categoria = input("Categoría (Superior/Inferior/Accesorio...): ").strip()
+                    precio = int(input("Precio: "))
+                    
+                    producto = Producto(codigo, nombre, categoria, precio)
+                    
+                    print("\n   Ahora agrega las tallas y cantidades:")
+                    
+                    while True:
+                        talla = input("\n   Talla (S/M/L/XL/XXL, etc.) o 'fin' para terminar: ").strip()
+                        
+                        if talla.lower() == 'fin':
+                            break
+                        
+                        if not talla:
+                            print("   Debes ingresar una talla")
+                            continue
+                        
+                        try:
+                            cantidad = int(input(f"   Cantidad para talla {talla.upper()}: "))
+                            if cantidad > 0:
+                                producto.agregar_talla(talla, cantidad)
+                                print(f"   ✓ Talla {talla.upper()} agregada con {cantidad} unidades")
+                            else:
+                                print("   La cantidad debe ser mayor a 0")
+                        except ValueError:
+                            print("   Cantidad inválida, intenta de nuevo")
+                    
+                    if producto.tallas:
+                        inventario.agregar_producto(producto)
+                        inventario.guardar_archivo("productos.txt")
+                        print("\n  Producto agregado y guardado exitosamente.")
+                    else:
+                        print("\n   No se agregó el producto (sin tallas)")
+                        
             except ValueError:
                 print("   Datos inválidos. Intenta de nuevo.")
             pausa()
@@ -135,20 +162,21 @@ def menu_inventario():
                     producto.mostrar_producto()
                     print("  ----------------")
                     
-                    cantidad_agregar = int(input("\nCantidad a agregar al stock: "))
+                    talla = input("\nTalla a la que agregar stock (S/M/L/XL, etc.): ").strip().upper()
+                    cantidad_agregar = int(input(f"Cantidad a agregar a talla {talla}: "))
                     
                     if cantidad_agregar <= 0:
                         print("   La cantidad debe ser mayor a 0.")
                     elif cantidad_agregar > 999999:
                         print("   La cantidad excede el máximo permitido (999,999).")
                     else:
-                        stock_anterior = producto.cantidad
-                        if producto.agregar_stock(cantidad_agregar):
+                        stock_anterior = producto.tallas.get(talla, 0)
+                        if producto.agregar_stock(talla, cantidad_agregar):
                             inventario.guardar_archivo("productos.txt")
-                            print(f"\n  Stock actualizado exitosamente")
+                            print(f"\n  Stock actualizado exitosamente para talla {talla}")
                             print(f"  Stock anterior: {stock_anterior}")
                             print(f"  Stock agregado: {cantidad_agregar}")
-                            print(f"  Stock nuevo: {producto.cantidad}")
+                            print(f"  Stock nuevo: {producto.tallas[talla]}")
                         else:
                             print("   Error al agregar stock.")
             except ValueError:
@@ -231,6 +259,8 @@ def menu_ventas():
                     clientes.append(cliente)
                     Cliente.guardar_clientes(clientes, "clientes.txt")
                     print(f"   Cliente '{nombre_cliente}' registrado.")
+                else:
+                    print(f"   Cliente encontrado: {cliente.nombre}")
 
                 venta = Venta(contador_ventas, cliente)
 
@@ -245,8 +275,33 @@ def menu_ventas():
                             break
                         continue
 
-                    print(f"  Producto: {producto.nombre} | Stock: {producto.cantidad} | Precio: ${producto.precio}")
-                    cantidad = int(input("Cantidad a vender: "))
+                    # Mostrar producto con tallas disponibles
+                    print(f"\n  Producto: {producto.nombre}")
+                    print(f"  Categoría: {producto.categoria}")
+                    print(f"  Precio: ${producto.precio}")
+                    
+                    tallas_disponibles = producto.get_tallas_disponibles()
+                    if not tallas_disponibles:
+                        print("   Este producto no tiene stock disponible en ninguna talla.")
+                        if input("¿Desea intentar con otro producto? (s/n): ").strip().lower() != 's':
+                            break
+                        continue
+                    
+                    print("\n  Tallas disponibles:")
+                    for talla in sorted(tallas_disponibles):
+                        print(f"    - {talla}: {producto.tallas[talla]} unidades")
+                    
+                    # Solicitar talla
+                    talla = input("\n  Talla deseada: ").strip().upper()
+                    
+                    if talla not in tallas_disponibles:
+                        print(f"   La talla {talla} no está disponible o no tiene stock.")
+                        if input("¿Desea intentar de nuevo? (s/n): ").strip().lower() != 's':
+                            break
+                        continue
+                    
+                    # Solicitar cantidad
+                    cantidad = int(input(f"  Cantidad a vender (disponible: {producto.tallas[talla]}): "))
 
                     if cantidad <= 0:
                         print("   La cantidad debe ser mayor a 0.")
@@ -254,10 +309,10 @@ def menu_ventas():
                             break
                         continue
 
-                    if venta.agregar_item(producto, cantidad):
-                        print(f"   {producto.nombre} agregado a la venta.")
+                    if venta.agregar_item(producto, talla, cantidad):
+                        print(f"   ✓ {producto.nombre} (Talla {talla}) agregado a la venta.")
                     else:
-                        print(f"   Stock insuficiente. Disponible: {producto.cantidad}")
+                        print(f"   Stock insuficiente para talla {talla}. Disponible: {producto.tallas.get(talla, 0)}")
 
                     if input("\n¿Agregar otro producto a esta venta? (s/n): ").strip().lower() != 's':
                         break

@@ -1,4 +1,6 @@
-101;Camiseta;Superior;M;95000;8
-102;Pantalon;Inferior;L;80000;16
-103;Chaqueta;Superior;XL;45000;8
-105;Medias;Inferior;10-12;15000;8
+101;Camiseta;Superior;95000;M:7,S/M/L:10
+102;Pantalon;Inferior;80000;L:15,S:10
+103;Chaqueta;Superior;45000;XL:8
+105;Medias;Inferior;15000;10-12:8
+100;Pantaloneta;Inferior;30000;XL:38
+104;Buzo;Superior;80000;XL:10,L:15,XXL:10

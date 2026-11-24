@@ -27,7 +27,8 @@ class Inventario:
     def guardar_archivo(self, nombre_archivo):
         with open(nombre_archivo, "w", encoding="utf-8") as archivo:
             for p in self.productos:
-                archivo.write(f"{p.codigo};{p.nombre};{p.categoria};{p.talla};{p.precio};{p.cantidad}\n")
+                tallas_str = ",".join([f"{talla}:{cantidad}" for talla, cantidad in p.tallas.items()])
+                archivo.write(f"{p.codigo};{p.nombre};{p.categoria};{p.precio};{tallas_str}\n")
 
     def cargar_archivo(self, nombre_archivo):
         self.productos = []
@@ -35,5 +36,19 @@ class Inventario:
             for linea in archivo:
                 if linea := linea.strip():
                     datos = linea.split(";")
-                    producto = Producto(int(datos[0]), datos[1], datos[2], datos[3], int(datos[4]), int(datos[5]))
+                    codigo = int(datos[0])
+                    nombre = datos[1]
+                    categoria = datos[2]
+                    precio = int(datos[3])
+                    
+                    # Parsear tallas
+                    tallas = {}
+                    if len(datos) > 4 and datos[4]:
+                        for talla_info in datos[4].split(","):
+                            if ":" in talla_info:
+                                talla, cantidad = talla_info.split(":")
+                                tallas[talla.upper()] = int(cantidad)
+                    
+                    producto = Producto(codigo, nombre, categoria, precio, tallas)
                     self.productos.append(producto)
+
